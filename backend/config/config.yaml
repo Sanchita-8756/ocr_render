@@ -1,0 +1,42 @@
+# OCR Project Configuration
+
+# Google Drive Settings
+gdrive:
+  root_folder_name: "Lunch Record"
+  credentials_path: "g_sheet2.json"
+  client_secrets_path: "client_secrets.json"
+
+# Google Sheets Settings
+gsheets:
+  credentials_path: "g_sheet2.json"
+  spreadsheet_title: "GRZ_Analytics_Lunch Reimbursement Sheet for HR (Lunch Reimbursemenet 2024)"
+  employee_data_sheet: "Employee Data"
+  archive_sheet: "Archive"
+  raw_data_sheet: "Raw Data"
+
+# OCR Settings
+ocr:
+  det_arch: "db_resnet50"
+  reco_arch: "crnn_vgg16_bn"
+  pretrained: true
+  supported_formats: [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".heic"]
+
+# Processing Settings
+processing:
+  reimbursement_amount: 40
+  similarity_threshold: 0.90
+  meal_types:
+    - "Special Packed M"
+    - "Special Veg Thali"
+    - "Special Non Veg Thali"
+
+# Paths
+paths:
+  download_base: "output/images"
+  output_csv: "output/csv/"
+  logs: "logs/"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

@@ -1,0 +1,2 @@
+# This file ensures the csv directory is preserved in git
+# CSV files will be generated here during runtime
