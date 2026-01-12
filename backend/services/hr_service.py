@@ -29,7 +29,7 @@ class HRService:
         
         if 'Image_name' in df.columns:
             df['Image_name'] = df['Image_name'].apply(
-                lambda x: os.path.abspath(os.path.join(self.backend_dir, '../output', x)) if pd.notna(x) else x
+                lambda x: x.replace('\\output\\output\\', '\\output\\') if pd.notna(x) and '\\output\\output\\' in str(x) else x
             )
         
         if 'Month Year' in df.columns and (year or month):
@@ -42,6 +42,35 @@ class HRService:
         
         return df
     
+    def _get_users_from_drive(self, year=None, month=None):
+        """Check Google Drive folders to count users who have uploaded receipts"""
+        try:
+            if not year or not month:
+                return 0
+            
+            # Get month name mapping
+            month_names = {
+                'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+                'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August', 
+                'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
+            }
+            month_year = f"{month_names.get(month, month)} {year}"
+            
+            downloader = GDriveDownloader(self.config)
+            
+            # Count users without downloading
+            users_count = downloader.count_users_with_uploads(
+                self.config['gdrive']['root_folder_name'],
+                month_year
+            )
+            
+            return users_count
+            
+        except Exception as e:
+            return 0
+    def get_users_uploaded_count(self, year=None, month=None):
+        """Get count of users who uploaded receipts to Drive"""
+        return self._get_users_from_drive(year, month)
     def get_dashboard_metrics(self, year=None, month=None):
         df = self._get_filtered_data(year, month)
         
@@ -113,22 +142,35 @@ class HRService:
         return df.to_dict('records')
     
     def download_images(self, filter_type, filter_value, year=None, month=None):
+        from utils.logger import get_logger
+        logger = get_logger('hr_service')
+        
         df = self._get_filtered_data(year, month)
         
         if df.empty:
+            logger.warning("No data found for download")
             return None
         
         if filter_type == 'employee':
             df = df[df['Emp ID'] == filter_value]
+            logger.info(f"Filtered to employee {filter_value}, found {len(df)} records")
         
         image_paths = df['Image_name'].tolist()
+        logger.info(f"Image paths to download: {image_paths}")
         
         temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+        files_added = 0
+        
         with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for img_path in image_paths:
-                if os.path.exists(img_path):
+                if pd.notna(img_path) and os.path.exists(img_path):
                     zip_file.write(img_path, os.path.basename(img_path))
+                    files_added += 1
+                    logger.info(f"Added to zip: {img_path}")
+                else:
+                    logger.warning(f"Image not found: {img_path}")
         
+        logger.info(f"Created zip with {files_added} files at: {temp_zip.name}")
         return temp_zip.name
     
     def export_csv_report(self, year=None, month=None):
@@ -169,7 +211,7 @@ class HRService:
             
             update_progress(15, 'Downloading from Google Drive...')
             
-            # Step 1: Download from Google Drive
+            # Step 1: Download from Google Drive (auth disabled)
             employee_names = downloader.download_employee_data(
                 self.config['gdrive']['root_folder_name'],
                 download_folder,

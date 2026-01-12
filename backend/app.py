@@ -52,6 +52,17 @@ def read_root():
 class MonthProcess(BaseModel):
     month_year: str
 
+@app.get("/api/dashboard/users-uploaded")
+def get_users_uploaded(year: str = None, month: str = None):
+    logger.info(f"Getting users uploaded count for year={year}, month={month}")
+    try:
+        count = hr_service.get_users_uploaded_count(year, month)
+        logger.info(f"Users uploaded count retrieved: {count}")
+        return {"users_uploaded": count}
+    except Exception as e:
+        logger.error(f"Error getting users uploaded count: {str(e)}", exc_info=True)
+        raise
+
 @app.get("/api/dashboard/metrics")
 def get_metrics(year: str = None, month: str = None):
     logger.info(f"Getting dashboard metrics for year={year}, month={month}")

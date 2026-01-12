@@ -1,12 +1,16 @@
 import React from 'react';
 
-const MetricsCard = ({ metrics }) => {
+const MetricsCard = ({ metrics, usersUploaded }) => {
   const cards = [
     { title: 'Total Receipts', value: metrics.total_receipts, gradient: 'from-blue-500 to-blue-600', icon: '📊' },
     { title: 'Approved', value: metrics.total_approvals, gradient: 'from-green-500 to-emerald-600', icon: '✅' },
-    { title: 'Pending', value: metrics.pending_approvals, gradient: 'from-yellow-500 to-orange-500', icon: '⏳' },
     { title: 'Rejected', value: metrics.rejected_receipts, gradient: 'from-red-500 to-pink-600', icon: '❌' }
   ];
+
+  // Add users uploaded card if data is available
+  if (usersUploaded !== null) {
+    cards.splice(1, 0, { title: 'Users Uploaded', value: usersUploaded, gradient: 'from-purple-500 to-indigo-600', icon: '👥' });
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

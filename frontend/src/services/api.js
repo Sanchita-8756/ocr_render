@@ -57,6 +57,9 @@ export const processMonth = (monthYear, onProgress) => {
   });
 };
 
+export const getUsersUploaded = (year, month) => 
+  axios.get(`${API_URL}/dashboard/users-uploaded`, { params: { year, month } });
+
 export const exportCSV = (year, month) => 
   axios.post(`${API_URL}/export/csv`, null, { 
     params: { year, month },

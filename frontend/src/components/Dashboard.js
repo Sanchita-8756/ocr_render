@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getMetrics, getSummary, getEmployees, downloadImages, processMonth, exportCSV } from '../services/api';
+import { getMetrics, getSummary, getEmployees, downloadImages, processMonth, exportCSV, getUsersUploaded } from '../services/api';
 import MetricsCard from './MetricsCard';
 import EmployeeTable from './EmployeeTable';
 import SummaryChart from './SummaryChart';
@@ -14,7 +14,21 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [usersUploaded, setUsersUploaded] = useState(null);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [progressStatus, setProgressStatus] = useState('');
+
+  const handleCheckUsersUploaded = async () => {
+    setLoadingUsers(true);
+    try {
+      const response = await getUsersUploaded(year, month);
+      setUsersUploaded(response.data.users_uploaded);
+    } catch (error) {
+      console.error('Error fetching users uploaded:', error);
+      setUsersUploaded(0);
+    }
+    setLoadingUsers(false);
+  };
 
   useEffect(() => {
     fetchData();
@@ -22,6 +36,7 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    setUsersUploaded(null); // Reset users uploaded when changing filters
     try {
       const [metricsRes, summaryRes, employeesRes] = await Promise.all([
         getMetrics(year, month),
@@ -115,6 +130,7 @@ const Dashboard = () => {
           <div className="flex gap-4 flex-wrap">
             <select value={year} onChange={(e) => setYear(e.target.value)} 
               className="px-4 py-3 border-2 border-blue-200 rounded-xl bg-white/90 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition-all">
+              <option value="2026">2026</option>
               <option value="2025">2025</option>
               <option value="2024">2024</option>
             </select>
@@ -126,6 +142,12 @@ const Dashboard = () => {
             </select>
             <button onClick={fetchData} className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
               🔄 Refresh
+            </button>
+            <button 
+              onClick={handleCheckUsersUploaded}
+              disabled={loadingUsers}
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:transform-none">
+              {loadingUsers ? '⏳ Checking...' : '👥 Check Users Uploaded'}
             </button>
             <button 
               onClick={handleProcessMonth} 
@@ -150,7 +172,7 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            {metrics && <MetricsCard metrics={metrics} />}
+            {metrics && <MetricsCard metrics={metrics} usersUploaded={usersUploaded} />}
             {summary.length > 0 && <SummaryChart data={summary} />}
             {employees.length > 0 && <EmployeeTable employees={employees} onDownload={handleDownload} />}
           </div>
