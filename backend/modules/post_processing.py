@@ -34,8 +34,8 @@ class PostProcessor:
             return worksheet
     
     def read_sheet(self):
-        """Read data from Quark City Emp Id - Grazitti Data sheet"""
-        worksheet = self.open_google_sheet('Quark City Emp Id', 'Grazitti Data')
+        """Read data from employee sheet"""
+        worksheet = self.open_google_sheet(self.config['gsheets']['spreadsheet_title'], self.config['gsheets']['employee_data_sheet'])
         if worksheet:
             data = worksheet.get_all_values()
             return pd.DataFrame(data[1:], columns=data[0])
@@ -168,13 +168,31 @@ class PostProcessor:
     def fill_employee_names(self, employee_df, result_df):
         """Fill employee names from employee data"""
         try:
+            #print(">>>>>>>>>>>>>>>>>>>>>",result_df.columns)
+            #if 'Emp Name' not in result_df.columns:
+            #    result_df['Emp Name'] = ''
+            #print(">>>>>>>>>>>>>>>>>>>>>",employee_df.columns)
+            #employee_df['Name'] = employee_df['First Name'].fillna('') + ' ' + employee_df['Last Name'].fillna('')
+            #merged_df = pd.merge(result_df, employee_df, left_on='Code', right_on='Emp ID', how='left')
+            #result_df['Emp Name'] = merged_df['Name'].fillna(result_df['Emp Name'])
+            
             if 'Emp Name' not in result_df.columns:
                 result_df['Emp Name'] = ''
-            
-            employee_df['Name'] = employee_df['First Name'].fillna('') + ' ' + employee_df['Last Name'].fillna('')
-            merged_df = pd.merge(result_df, employee_df, left_on='Code', right_on='Emp ID', how='left')
-            result_df['Emp Name'] = merged_df['Name'].fillna(result_df['Emp Name'])
-            
+            print('#########################')
+            employee_df['Name'] = (
+                employee_df['UserID']
+                .fillna('')
+                .str.replace('.', ' ', regex=False)
+                .str.title()
+            )
+
+            print(employee_df)
+            print('#########################2')
+            print(result_df)
+            print('#########################3')
+            merged_df = pd.merge(result_df,employee_df[['Emp ID', 'Name']], left_on='Code', right_on='Emp ID',    how='left')
+            print(merged_df)
+            result_df['Emp Name'] = merged_df['Name'].fillna(result_df['Emp Name'])            
             return result_df
         except Exception as e:
             print(f"Error in fill_employee_names: {str(e)}")
@@ -220,12 +238,20 @@ class PostProcessor:
         
         # Try the extraction - pattern: images\username\October 2025
         df["UserID"] = df['Image_name'].str.extract(r'images[/\\]([^/\\]+)[/\\]')
+        print(f"Employee data columns: {emp_data_df.columns.tolist()}")
+        print(f"Sample employee data: {emp_data_df.head()}")
         merged_df = pd.merge(df, emp_data_df, on='UserID', how='left')
         
         if "Emp ID" in merged_df.columns:
             merged_df["Emp ID"].replace("nan", None, inplace=True)
         if "Meal type" in merged_df.columns:
             merged_df["Meal type"].replace("nan", None, inplace=True)    
+        
+        # # Fill employee names from merged data
+        # if 'First Name' in merged_df.columns and 'Last Name' in merged_df.columns:
+        #     merged_df['Emp Name'] = (merged_df['First Name'].fillna('') + ' ' + merged_df['Last Name'].fillna('')).str.strip()
+        # elif 'Emp Name' not in merged_df.columns:
+        #     merged_df['Emp Name'] = ''
         
         # Add comment and category columns
         merged_df["Comment"] = None

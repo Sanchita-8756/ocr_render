@@ -292,7 +292,10 @@ class HRService:
             df = self.processor.replace_characters_in_code(df)
             df = self.processor.add_reimbursement_column(df)
             df = self.processor.add_reimbursement_amount(df)
+            print(">>>>>>>>>>>>>>>>>>>>>>>1",employee_df)
+            print(">>>>>>>>>>>>>>>>>>>>>>>2",df)
             df = self.processor.fill_employee_names(employee_df, df)
+            print(">>>>>>>>>>>>>>>>>>>>>>>3",df)
             df = self.processor.extract_day(df)
             df = self.processor.extract_month_year(df)
             

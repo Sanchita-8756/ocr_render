@@ -36,7 +36,6 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    setUsersUploaded(null); // Reset users uploaded when changing filters
     try {
       const [metricsRes, summaryRes, employeesRes] = await Promise.all([
         getMetrics(year, month),
